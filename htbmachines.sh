@@ -26,6 +26,7 @@ function helpPanel(){
   echo -e "\n${yellowColor}[+]${endColor} -u) Get or update machines data"
   echo -e "\n${yellowColor}[+]${endColor} -m) Search machine info"
   echo -e "\n${yellowColor}[+]${endColor} -i) Search machine by IP address"
+  echo -e "\n${yellowColor}[+]${endColor} -y) Search YouTube link from a machine name"
   echo -e "\n${yellowColor}[+]${endColor} -h) Show help info"
   echo -e "\n"
 }
@@ -66,25 +67,49 @@ function getData(){
 function searchMachine(){
   machineName="$1"
   echo -e "\n"
-  cat bundle.js | grep "name: \"${machineName}\"" -A 10 | grep -vE "sku|resuelta|id" | tr -d '"' | tr -d ',' | sed 's/^ *//'
-  echo -e "\n"
+  machine=$(cat bundle.js | grep "name: \"${machineName}\"" -A 10 | grep -vE "sku|resuelta|id" | tr -d '"' | tr -d ',' | sed 's/^ *//')
+
+  if [ "$machine" ]; then
+    echo -e "\n${yellowColor}[+]${endColor} "${machine}"\n"
+  else
+    echo -e "\n${redColor}[!] Machine not found${endColor}\n"
+  fi
 }
 
 #### serch machine by IP and show the its name
 function searchByIP(){
   echo -e "\n"
-  cat bundle.js | grep "ip: \"${ipAdress}\"" -B 3 | grep -vE "id|sku|ip" | tr -d '"' | tr -d ',' | sed 's/^ *//'
+  ip=$(cat bundle.js | grep "ip: \"${ipAdress}\"" -B 3 | grep -vE "id|sku|ip" | tr -d '"' | tr -d ',' | sed 's/^ *//')
+
+  if [ "$ip" ]; then
+    echo -e "\n${ip}\n"
+  else
+    echo -e "\n${redColor}[!] Machine not found${endColor}\n"
+  fi
+}
+
+#### search Youtube machine from a machine name ####
+function searchYoutubeLink(){
+  echo -e "\n"
+  youtube_link=$(cat bundle.js | grep "name: \"${machineName}\"" -A 10 | grep "youtube:" | tr -d '"' | tr -d ',' | sed 's/^ *//')
+
+  if [ "$youtube_link" ]; then
+   echo -e "\n${yellowColor}[+]${endColor}${grayColor} This is the YouTube link for the${endColor} ${blueColor}${machineName}${endColor} ${grayColor}machine:${endColor} ${purpleColor}${youtube_link}${endColor}" 
+  else
+    echo -e "\n${redColor}[!] The machine was not found${endColor}"
+  fi
   echo -e "\n"
 }
 
 declare -i parameter_counter=0
 
 #### menu ####
-while getopts "m:i:hu" arg; do
+while getopts "m:i:y:hu" arg; do
   case $arg in
     m) machineName=$OPTARG; let parameter_counter+=1;;
     u) let parameter_counter=2;;
     i) ipAdress=$OPTARG; let parameter_counter=3;;
+    y) machineName=$OPTARG; let parameter_counter=4;;
     h) ;;
   esac
 done
@@ -95,6 +120,8 @@ elif [ $parameter_counter -eq 2 ]; then
   getData
 elif [ $parameter_counter -eq 3 ]; then
   searchByIP $ipAdress
+elif [ $parameter_counter -eq 4 ]; then
+  searchYoutubeLink $machineName
 else
   helpPanel
 fi
