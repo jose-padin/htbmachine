@@ -64,14 +64,15 @@ function getData(){
   tput cnorm
 }
 
-#### search machine ####
+#### search machine by name ####
 function searchMachine(){
+
   machineName="$1"
-  echo -e "\n"
-  machine=$(cat bundle.js | grep "name: \"${machineName}\"" -A 10 | grep -vE "sku|resuelta|id" | tr -d '"' | tr -d ',' | sed 's/^ *//')
+  machine=$(cat bundle.js | grep "name: \"${machineName}\"" -A 10 | grep -vE "sku|resuelta|id|}|lf" | tr -d '"' | tr -d ',' | sed 's/^ *//')
 
   if [ "$machine" ]; then
-    echo -e "\n${yellowColor}[+]${endColor} "${machine}"\n"
+    echo "${machine}"
+    echo -e "\n"
   else
     echo -e "\n${redColor}[!] Machine not found${endColor}\n"
   fi
