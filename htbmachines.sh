@@ -23,11 +23,12 @@ trap ctrl_c INT
 function helpPanel(){
   echo -e "\n\n[+] Usage:"
   echo -e "\n${yellowColor}[+]${endColor} ./htbmachines.sh [arg]\n"
-  echo -e "\n${yellowColor}[+]${endColor} -u) Get or update machines data"
-  echo -e "\n${yellowColor}[+]${endColor} -m) Search machine info"
-  echo -e "\n${yellowColor}[+]${endColor} -i) Search machine by IP address"
-  echo -e "\n${yellowColor}[+]${endColor} -y) Search YouTube link from a machine name"
-  echo -e "\n${yellowColor}[+]${endColor} -h) Show help info"
+  echo -e "\n${yellowColor}[+]${endColor} ${redColor}-u)${endColor} ${grayColor}Get or update machines data${endColor}"
+  echo -e "\n${yellowColor}[+]${endColor} ${redColor}-m)${endColor} ${grayColor}Search machine info${endColor}"
+  echo -e "\n${yellowColor}[+]${endColor} ${redColor}-i)${endColor} ${grayColor}Search machine by IP address${endColor}"
+  echo -e "\n${yellowColor}[+]${endColor} ${redColor}-y)${endColor} ${grayColor}Search YouTube link from a machine name${endColor}"
+  echo -e "\n${yellowColor}[+]${endColor} ${redColor}-d)${endColor} ${grayColor}Search machines by level of difficulty [Fácil, Media, Difícil, Insane]${endColor}"
+  echo -e "\n${yellowColor}[+]${endColor} ${redColor}-h)${endColor} ${grayColor}Show help info${endColor}"
   echo -e "\n"
 }
 
@@ -88,28 +89,39 @@ function searchByIP(){
   fi
 }
 
-#### search Youtube machine from a machine name ####
+#### search Youtube link from a machine name ####
 function searchYoutubeLink(){
   echo -e "\n"
   youtube_link=$(cat bundle.js | grep "name: \"${machineName}\"" -A 10 | grep "youtube:" | tr -d '"' | tr -d ',' | sed 's/^ *//')
 
   if [ "$youtube_link" ]; then
-   echo -e "\n${yellowColor}[+]${endColor}${grayColor} This is the YouTube link for the${endColor} ${blueColor}${machineName}${endColor} ${grayColor}machine:${endColor} ${purpleColor}${youtube_link}${endColor}" 
+   echo -e "\n${yellowColor}[+]${endColor}${grayColor} This is the YouTube link for the${endColor} ${blueColor}${machineName}${endColor} ${grayColor}machine:${endColor} ${purpleColor}${youtube_link}${endColor}"
   else
     echo -e "\n${redColor}[!] The machine was not found${endColor}"
   fi
   echo -e "\n"
 }
 
+function searchByDifficulty(){
+  difficulty_level="$(cat bundle.js | grep "dificultad: \"${difficulty}\"" -B 5 | tr -d '"' | tr -d ',' | sed 's/^ *//' | grep 'name' | awk 'NF{print $NF}')"
+
+  if [ "$difficulty_level" ]; then
+    echo "$difficulty_level" | column
+  else
+    echo -e "\n${redColor}[!] The difficulty level was not found${endColor}\n"
+  fi
+}
+
 declare -i parameter_counter=0
 
 #### menu ####
-while getopts "m:i:y:hu" arg; do
+while getopts "m:i:y:d:hu" arg; do
   case $arg in
-    m) machineName=$OPTARG; let parameter_counter+=1;;
+    m) machineName="$OPTARG"; let parameter_counter+=1;;
     u) let parameter_counter=2;;
-    i) ipAdress=$OPTARG; let parameter_counter=3;;
-    y) machineName=$OPTARG; let parameter_counter=4;;
+    i) ipAdress="$OPTARG"; let parameter_counter=3;;
+    y) machineName="$OPTARG"; let parameter_counter=4;;
+    d) difficulty="$OPTARG"; let parameter_counter=5;;
     h) ;;
   esac
 done
@@ -122,6 +134,8 @@ elif [ $parameter_counter -eq 3 ]; then
   searchByIP $ipAdress
 elif [ $parameter_counter -eq 4 ]; then
   searchYoutubeLink $machineName
+elif [ $parameter_counter -eq 5 ]; then
+  searchByDifficulty $difficulty
 else
   helpPanel
 fi
