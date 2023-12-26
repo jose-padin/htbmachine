@@ -21,7 +21,7 @@ trap ctrl_c INT
 
 #### help panel ####
 function helpPanel(){
-  echo -e "\n\n[+] Usage:"
+  echo -e "\n${yellowColor}[+]${endColor} ${grayColor}Usage:${endColor}"
   echo -e "\n${yellowColor}[+]${endColor} ./htbmachines.sh [arg]\n"
   echo -e "\n${yellowColor}[+]${endColor} ${redColor}-u)${endColor} ${grayColor}Get or update machines data${endColor}"
   echo -e "\n${yellowColor}[+]${endColor} ${redColor}-m)${endColor} ${grayColor}Search machine info${endColor}"
@@ -71,6 +71,7 @@ function searchMachine(){
   machine=$(cat bundle.js | grep "name: \"${machineName}\"" -A 10 | grep -vE "sku|resuelta|id|}|lf" | tr -d '"' | tr -d ',' | sed 's/^ *//')
 
   if [ "$machine" ]; then
+    echo -e "\n${yellowColor}[+]${endColor} ${grayColor}Listing machine properties${endColor}\n"
     echo "${machine}"
     echo -e "\n"
   else
@@ -113,16 +114,47 @@ function searchByDifficulty(){
   fi
 }
 
+function searchByOS(){
+  os="$1"
+  echo -e "\n${yellowColor}[+]${endColor} ${grayColor}Searching by OS:${endColor} ${purpleColor}$os${endColor}\n"
+
+  os="$(cat bundle.js | grep "so: \"${os}" -B 5 | tr -d '"' | tr -d ',' | grep "name:" | sed 's/^ *//' | awk 'NF{print $NF}')"
+
+  if [ "$os" ]; then
+    echo "${os}" | column
+  else
+    echo -e "\n${redColor}[!] Wrong OS introduced${endColor}\n"
+  fi
+}
+
+function searchByDifficultyAndOS() {
+  difficulty="$1"
+  os="$2"
+
+  echo -e "\n${yellowColor}[+]${endColor} ${grayColor}Searching for machines with difficulty${endColor} ${purpleColor}$difficulty${endColor} ${grayColor}and OS${endColor} ${purpleColor}$os${endColor}\n"
+
+  filter_result="$(cat bundle.js | grep "dificultad: \"${difficulty}" -C 5 | grep "so: \"${os}" -B 4 | grep "name:" | tr -d '"' | tr -d ',' | sed 's/^ *//' | awk 'NF{print $NF}' | column)"
+
+  if [ "$filter_result" ]; then
+    echo "$filter_result" | column
+  else
+    echo -e "\n${redColor}[!] Data not found${endColor}\n"
+  fi
+}
+
 declare -i parameter_counter=0
+declare -i flag_difficulty=0
+declare -i flag_os=0
 
 #### menu ####
-while getopts "m:i:y:d:hu" arg; do
+while getopts "m:i:y:d:o:hu" arg; do
   case $arg in
     m) machineName="$OPTARG"; let parameter_counter+=1;;
-    u) let parameter_counter=2;;
-    i) ipAdress="$OPTARG"; let parameter_counter=3;;
-    y) machineName="$OPTARG"; let parameter_counter=4;;
-    d) difficulty="$OPTARG"; let parameter_counter=5;;
+    u) let parameter_counter+=2;;
+    i) ipAdress="$OPTARG"; let parameter_counter+=3;;
+    y) machineName="$OPTARG"; let parameter_counter+=4;;
+    d) difficulty="$OPTARG"; flag_difficulty=1; let parameter_counter+=5;;
+    o) os="$OPTARG"; flag_os=1; let parameter_counter+=6;;
     h) ;;
   esac
 done
@@ -137,6 +169,10 @@ elif [ $parameter_counter -eq 4 ]; then
   searchYoutubeLink $machineName
 elif [ $parameter_counter -eq 5 ]; then
   searchByDifficulty $difficulty
+elif [ $parameter_counter -eq 6 ]; then
+  searchByOS $os
+elif [ $flag_os -eq 1 ] && [ $flag_difficulty -eq 1 ]; then
+  searchByDifficultyAndOS $difficulty $os
 else
   helpPanel
 fi
