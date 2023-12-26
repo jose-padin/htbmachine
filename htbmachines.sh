@@ -28,6 +28,7 @@ function helpPanel(){
   echo -e "\n${yellowColor}[+]${endColor} ${redColor}-i)${endColor} ${grayColor}Search machine by IP address${endColor}"
   echo -e "\n${yellowColor}[+]${endColor} ${redColor}-y)${endColor} ${grayColor}Search YouTube link from a machine name${endColor}"
   echo -e "\n${yellowColor}[+]${endColor} ${redColor}-d)${endColor} ${grayColor}Search machines by level of difficulty [Fácil, Media, Difícil, Insane]${endColor}"
+  echo -e "\n${yellowColor}[+]${endColor} ${redColor}-s)${endColor} ${grayColor}Search machines by skill${endColor}"
   echo -e "\n${yellowColor}[+]${endColor} ${redColor}-h)${endColor} ${grayColor}Show help info${endColor}"
   echo -e "\n"
 }
@@ -142,12 +143,25 @@ function searchByDifficultyAndOS() {
   fi
 }
 
+function searchBySkill() {
+  skill="$1"
+  echo $skill
+
+  skill_result="$(cat bundle.js | grep "skills:" -B 6 | grep "$skill" -i -B 6 | grep "name:" | tr -d '"' | tr -d ',' | sed 's/^ *//' | awk 'NF{print $NF}')"
+
+  if [ "$skill_result" ]; then
+    echo "$skill_result" | column
+  else
+    echo -e "\n${redColor}[!] Machines with this skill not found${endColor}\n"
+  fi
+}
+
 declare -i parameter_counter=0
 declare -i flag_difficulty=0
 declare -i flag_os=0
 
 #### menu ####
-while getopts "m:i:y:d:o:hu" arg; do
+while getopts "m:i:y:d:o:s:hu" arg; do
   case $arg in
     m) machineName="$OPTARG"; let parameter_counter+=1;;
     u) let parameter_counter+=2;;
@@ -155,6 +169,7 @@ while getopts "m:i:y:d:o:hu" arg; do
     y) machineName="$OPTARG"; let parameter_counter+=4;;
     d) difficulty="$OPTARG"; flag_difficulty=1; let parameter_counter+=5;;
     o) os="$OPTARG"; flag_os=1; let parameter_counter+=6;;
+    s) skill="$OPTARG"; let parameter_counter+=7;;
     h) ;;
   esac
 done
@@ -173,6 +188,8 @@ elif [ $parameter_counter -eq 6 ]; then
   searchByOS $os
 elif [ $flag_os -eq 1 ] && [ $flag_difficulty -eq 1 ]; then
   searchByDifficultyAndOS $difficulty $os
+elif [ $parameter_counter -eq 7 ]; then
+  searchBySkill "$skill"
 else
   helpPanel
 fi
